@@ -13,6 +13,9 @@
         <FIELD NAME="requestid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="requestsubmitdate" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="msisdn" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="servicename" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="servicecost" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="servicecode" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="pin" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="subscriptiondate" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
