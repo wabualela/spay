@@ -146,7 +146,7 @@ class enrol_spay_plugin extends enrol_plugin
             $this->get_config('url'),
             $this->get_config('providerkey'),
             $this->get_config('username'),
-            $this->get_config('passwd'),
+            $this->get_config('passwd')
         );
 
 
