@@ -140,12 +140,24 @@ class enrol_spay_plugin extends enrol_plugin
     public function enrol_spay(stdClass $instance, $data = null)
     {
         global $DB, $USER, $CFG;
+<<<<<<< HEAD
         require_once('Spay/lib/Spay.php');
         
         Spay::$url = $this->get_config('url');
         Spay::$providerkey = $this->get_config('providerkey');
         Spay::$username = $this->get_config('username');
         Spay::$password = $this->get_config('passwd');
+=======
+        // require_once('./Spay/lib/Spay.php');
+
+        $spay = new Spay(
+            $this->get_config('url'),
+            $this->get_config('providerkey'),
+            $this->get_config('username'),
+            $this->get_config('passwd')
+        );
+
+>>>>>>> 28fe3a301719f03891d6628fa35f6f85fdab6979
 
         $record = $DB->get_record('enrol_spay', array('userid' => $USER->id, 'courseid' =>  $instance->courseid, 'instanceid' => $instance->id), IGNORE_MISSING);
       
