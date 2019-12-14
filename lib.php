@@ -140,16 +140,35 @@ class enrol_spay_plugin extends enrol_plugin
     public function enrol_spay(stdClass $instance, $data = null)
     {
         global $DB, $USER, $CFG;
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 9b19520677b7515acef0b0a5abc540e713bf6cda
         require_once('Spay/lib/Spay.php');
         
         Spay::$url = $this->get_config('url');
         Spay::$providerkey = $this->get_config('providerkey');
         Spay::$username = $this->get_config('username');
         Spay::$password = $this->get_config('passwd');
+<<<<<<< HEAD
+=======
+=======
+        // require_once('./Spay/lib/Spay.php');
+
+        $spay = new Spay(
+            $this->get_config('url'),
+            $this->get_config('providerkey'),
+            $this->get_config('username'),
+            $this->get_config('passwd')
+        );
+
+>>>>>>> 28fe3a301719f03891d6628fa35f6f85fdab6979
+>>>>>>> 9b19520677b7515acef0b0a5abc540e713bf6cda
 
         $record = $DB->get_record('enrol_spay', array('userid' => $USER->id, 'courseid' =>  $instance->courseid, 'instanceid' => $instance->id), IGNORE_MISSING);
       
         if ($record) {
+<<<<<<< HEAD
              $result = Spay::enrol_spay_pay($data->pin, $record->requestid);
             if($result->responseCode == 105){
                 $errors['pin'] = $result->responseMessage;
@@ -171,6 +190,13 @@ class enrol_spay_plugin extends enrol_plugin
             if ($instance->customint4 != ENROL_DO_NOT_SEND_EMAIL) {
                 $this->email_welcome_message($instance, $USER);
             }
+=======
+            
+            
+            
+            $timestart = time();
+            // $timeend = $timestart + ;
+>>>>>>> 9b19520677b7515acef0b0a5abc540e713bf6cda
         } else {
             $enrol = Spay::enrol_spay_init_pay($data->msisdn, $data->servicecode);
             $new = new stdClass();

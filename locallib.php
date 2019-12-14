@@ -147,6 +147,7 @@ class enrol_spay_enrol_form extends moodleform
             return $errors;
         }
 
+<<<<<<< HEAD
        if(array_key_exists('msisdn', $data) && $data['msisdn'] === ''){
             $errors['msisdn'] = get_string('msisdnempty', 'enrol_spay');
         }
@@ -160,6 +161,13 @@ class enrol_spay_enrol_form extends moodleform
         }
 
         if(array_key_exists('pin', $data) && $data['pin'] === ''){
+=======
+        if ($data['msisdn'] && !empty($data['msisdn'])) {
+            $errors['msisdn'] = get_string('msisdnempty', 'enrol_spay');
+        }
+        
+         if ($data['pin'] && !empty($data['pin'])) {
+>>>>>>> 9b19520677b7515acef0b0a5abc540e713bf6cda
             $errors['pin'] = get_string('pinempty', 'enrol_spay');
         }
 
