@@ -109,4 +109,4 @@ $string['subscriptioncost'] = 'Subscription Cost';
 $string['subscriptionamount'] = ' SDG';
 
 $string['enrolme'] = 'Enrol me';
-
+$string['enrolmenow'] = 'Continue';

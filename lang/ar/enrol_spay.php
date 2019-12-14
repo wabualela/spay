@@ -82,3 +82,19 @@ $string['spay:unenrolself'] = 'Unenrolself spay';
 $string['charge_description1'] = "create customer for email receipt";
 $string['charge_description2'] = 'Charge for Course Enrolment Cost.';
 $string['stripe_sorry'] = "Sorry, you can not use the script that way.";
+
+$string['privacy:metadata'] = 'The SPay - Sudani Payment enrolment plugin does not store any personal data.';
+$string['spayworning'] = 'تنبيه سوف يتم خصم منك اثنين جنيه للاشتراك اليومي كطالب وهذا الاشتراك يجدد تلقائيا';
+$string['msisdn'] = 'رقم الموبايل';
+$string['msisdnempty'] = 'لقد نسيت ادخال رقم تلفون';
+$string['misdnnotvalid'] = 'ادخل رقم تلفون سوداني صحيح';
+$string['msisdn_help'] = 'رقم تلفون سوداني مثل  249123456789  ';
+$string['pin'] = 'رقم التاكيد';
+$string['pinempty'] = 'لم تدخل رقم التاكيد';
+$string['pinnotvalid'] = 'رقم التاكيد الذي ادخلته غير صحيح';
+$string['pin_help'] = 'رقم التاكيد الذي ارسل الي رقم تلفونك';
+$string['subscriptioncost'] = 'تكلفة الاشتراك ';
+$string['subscriptionamount'] = 'جنيه سوداني';
+$string['enrolme'] = 'ارسل الان';
+$string['enrolmenow'] = 'اخصم واشترك';
+
