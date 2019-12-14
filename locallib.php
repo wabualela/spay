@@ -77,44 +77,48 @@ class enrol_spay_enrol_form extends moodleform
         $instance = $this->_customdata;
         $this->instance = $instance;
         $plugin = enrol_get_plugin('spay');
-        $record = $DB->get_record('enrol_spay', array('userid' => $USER->id, 'courseid' =>  $instance->courseid, 'instanceid' => $instance->id), IGNORE_MISSING);
-
+        
+        $record = $DB->get_record('enrol_spay', array('instanceid' => $instance->id, 'userid' => $USER->id, 'courseid' => $instance->courseid),'*', IGNORE_MISSING);
+        $services = array();
+            foreach (explode("\n", $plugin->get_config('servicecodes')) as $service) {
+                $tmp = explode("|", $service);
+                $services[$tmp[0]]['code'] =  $tmp[1];
+                $services[$tmp[0]]['cost'] =  intval($tmp[2]);
+            }
+            
         $heading = $plugin->get_instance_name($instance);
         $mform->addElement('header', 'spayheader', $heading);
 
         if ($record) {
-
+            
             $mform->addElement('text', 'pin', get_string('pin', 'enrol_spay'));
-            $mform->setType('pin', PARAM_TEXT);
+            $mform->setType('pin', PARAM_INT);
             $mform->addHelpButton('pin', 'pin', 'enrol_spay');
+
+            $mform->addElement('static', '', get_string('subscriptioncost', 'enrol_spay'), $services[$heading]['cost'] . ' ' . get_string('subscriptionamount', 'enrol_spay'));
+            
+            $this->add_action_buttons(false, get_string('enrolmenow', 'enrol_spay'));
         } else {
 
             $mform->addElement('text', 'msisdn', get_string('msisdn', 'enrol_spay'));
             $mform->setType('msisdn', PARAM_TEXT);
             $mform->addHelpButton('msisdn', 'msisdn', 'enrol_spay');
 
-            $services = array();
-            $servicenames = array();
-            foreach (explode("\n", $plugin->get_config('servicecodes')) as $service) {
-
-                $tmp = explode("|", $service);
-                $services[$tmp[0]]['code'] =  $tmp[1];
-                $services[$tmp[0]]['cost'] =  intval($tmp[2]);
-                $servicenames["{$tmp[0]}"] = $tmp[0];
-            }
-
+            
+         
             $mform->addElement('static', '', get_string('subscriptioncost', 'enrol_spay'), $services[$heading]['cost'] . get_string('subscriptionamount', 'enrol_spay'));
+            
+            $this->add_action_buttons(false, get_string('enrolme', 'enrol_spay'));
         }
 
 
-        $this->add_action_buttons(false, get_string('enrolme', 'enrol_spay'));
 
-        $mform->addElement('hidden', 'cost');
-        $mform->setType('cost', PARAM_INT);
-        $mform->setDefault('cost', $services[$heading]['cost']);
+        $mform->addElement('hidden', 'servicecost');
+        $mform->setType('servicecost', PARAM_INT);
+        $mform->setDefault('servicecost', $services[$heading]['cost']);
 
         $mform->addElement('hidden', 'servicecode');
-        $mform->setType('servicecode', PARAM_INT);
+        $mform->setType('servicecode', PARAM_TEXT);
         $mform->setDefault('servicecode', $services[$heading]['code']);
 
         $mform->addElement('hidden', 'id');
@@ -132,18 +136,26 @@ class enrol_spay_enrol_form extends moodleform
 
         $errors = parent::validation($data, $files);
         $instance = $this->instance;
-
+        
         if ($this->toomany) {
             $errors['notice'] = get_string('error');
             return $errors;
         }
 
-        if (empty($data['msisdn'])) {
+       if(array_key_exists('msisdn', $data) && $data['msisdn'] === ''){
             $errors['msisdn'] = get_string('msisdnempty', 'enrol_spay');
         }
-
-        if (preg_match("\+?([0-9]{2})-?([0-9]{3})-?([0-9]{6,7})", $data['msisdn'])) {
+        
+        if( array_key_exists('msisdn', $data) && 
+            preg_match("/^[0-9]/", $data['msisdn']) &&
+            strlen($data['msisdn']) !== 12
+            ){
             $errors['msisdn'] = get_string('misdnnotvalid', 'enrol_spay');
+            
+        }
+
+        if(array_key_exists('pin', $data) && $data['pin'] === ''){
+            $errors['pin'] = get_string('pinempty', 'enrol_spay');
         }
 
         return $errors;

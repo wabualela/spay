@@ -140,20 +140,37 @@ class enrol_spay_plugin extends enrol_plugin
     public function enrol_spay(stdClass $instance, $data = null)
     {
         global $DB, $USER, $CFG;
-        // require_once('./Spay/lib/Spay.php');
+        require_once('Spay/lib/Spay.php');
+        
+        Spay::$url = $this->get_config('url');
+        Spay::$providerkey = $this->get_config('providerkey');
+        Spay::$username = $this->get_config('username');
+        Spay::$password = $this->get_config('passwd');
 
-        $spay = new Spay(
-            $this->get_config('url'),
-            $this->get_config('providerkey'),
-            $this->get_config('username'),
-            $this->get_config('passwd'),
-        );
-
-
-        $record = $DB->get_record('enrol_spay', array('userid' => $USER->id, 'courseid' =>  $instance->courseid, 'instanceid' => $instance->id), IGNORE_MISSING);
-
-        if ($record) { } else {
-            $enrol = $spay->enrol_spay_init_pay($data->msisdn, $data->servicecode);
+        $record = $DB->get_record('enrol_spay', array('instanceid' => $instance->id),'*', IGNORE_MISSING);
+      
+        if ($record) {
+             $result = Spay::enrol_spay_pay($data->pin, $record->requestid);
+            if($result->status){
+            
+            $new = new stdClass();
+            $new->id = $record->id;
+            $new->pin = $data->pin;
+            $new->subscriptiondate = time();
+            $DB->update_record('enrol_spay', $new, false);
+            
+            $timestart = time();
+            $timeend = $instance->enrolperiod ? ($timestart + $instance->enrolperiod) : 0;
+            
+            $this->enrol_user($instance, $USER->id, $instance->roleid, $timestart, $timeend);
+            $this->email_welcome_message($instance, $USER);
+                
+            }else{
+                return;
+            }
+         
+        } else {
+            $enrol = Spay::enrol_spay_init_pay($data->msisdn, $data->servicecode);
             $new = new stdClass();
             $new->userid = $USER->id;
             $new->courseid = $instance->courseid;
@@ -161,11 +178,10 @@ class enrol_spay_plugin extends enrol_plugin
             $new->requestid = $enrol->requestId;
             $new->msisdn = $data->msisdn;
             $new->servicename = $instance->name;
-            $new->servicecost = $data->cost;
+            $new->servicecost = $data->servicecost;
             $new->servicecode = $data->servicecode;
             $new->requestsubmitdate = time();
-            // die(json_encode($enrol));
-            // $DB->insert_record('enrol_spay', $new);
+            $DB->insert_record('enrol_spay', $new);
             return;
         }
 
@@ -778,7 +794,7 @@ class enrol_spay_plugin extends enrol_plugin
 
         $options = $this->get_status_options();
         $mform->addElement('select', 'status', get_string('status', 'enrol_spay'), $options);
-        $mform->addHelpButton('status', 'status', 'enrol_spay');
+        // $mform->addHelpButton('status', 'status', 'enrol_spay');
 
         /* 
         $options = $this->get_newenrols_options();
@@ -787,11 +803,9 @@ class enrol_spay_plugin extends enrol_plugin
         $mform->disabledIf('customint6', 'status', 'eq', ENROL_INSTANCE_DISABLED);
         */
 
-        /* 
         $options = array('optional' => true, 'defaultunit' => 86400);
         $mform->addElement('duration', 'enrolperiod', get_string('enrolperiod', 'enrol_spay'), $options);
         $mform->addHelpButton('enrolperiod', 'enrolperiod', 'enrol_spay');
-        */
 
         /* 
         $options = $this->get_expirynotify_options();
@@ -832,40 +846,40 @@ class enrol_spay_plugin extends enrol_plugin
         $mform->setType('customint3', PARAM_INT);
          */
 
-        require_once($CFG->dirroot . '/cohort/lib.php');
+        // require_once($CFG->dirroot . '/cohort/lib.php');
 
-        $cohorts = array(0 => get_string('no'));
-        $allcohorts = cohort_get_available_cohorts($context, 0, 0, 0);
-        if ($instance->customint5 && !isset($allcohorts[$instance->customint5])) {
-            $c = $DB->get_record(
-                'cohort',
-                array('id' => $instance->customint5),
-                'id, name, idnumber, contextid, visible',
-                IGNORE_MISSING
-            );
-            if ($c) {
-                // Current cohort was not found because current user can not see it. Still keep it.
-                $allcohorts[$instance->customint5] = $c;
-            }
-        }
-        foreach ($allcohorts as $c) {
-            $cohorts[$c->id] = format_string($c->name, true, array('context' => context::instance_by_id($c->contextid)));
-            if ($c->idnumber) {
-                $cohorts[$c->id] .= ' [' . s($c->idnumber) . ']';
-            }
-        }
-        if ($instance->customint5 && !isset($allcohorts[$instance->customint5])) {
-            // Somebody deleted a cohort, better keep the wrong value so that random ppl can not enrol.
-            $cohorts[$instance->customint5] = get_string('unknowncohort', 'cohort', $instance->customint5);
-        }
-        if (count($cohorts) > 1) {
-            $mform->addElement('select', 'customint5', get_string('cohortonly', 'enrol_spay'), $cohorts);
-            $mform->addHelpButton('customint5', 'cohortonly', 'enrol_spay');
-        } else {
-            $mform->addElement('hidden', 'customint5');
-            $mform->setType('customint5', PARAM_INT);
-            $mform->setConstant('customint5', 0);
-        }
+        // $cohorts = array(0 => get_string('no'));
+        // $allcohorts = cohort_get_available_cohorts($context, 0, 0, 0);
+        // if ($instance->customint5 && !isset($allcohorts[$instance->customint5])) {
+        //     $c = $DB->get_record(
+        //         'cohort',
+        //         array('id' => $instance->customint5),
+        //         'id, name, idnumber, contextid, visible',
+        //         IGNORE_MISSING
+        //     );
+        //     if ($c) {
+        //         // Current cohort was not found because current user can not see it. Still keep it.
+        //         $allcohorts[$instance->customint5] = $c;
+        //     }
+        // }
+        // foreach ($allcohorts as $c) {
+        //     $cohorts[$c->id] = format_string($c->name, true, array('context' => context::instance_by_id($c->contextid)));
+        //     if ($c->idnumber) {
+        //         $cohorts[$c->id] .= ' [' . s($c->idnumber) . ']';
+        //     }
+        // }
+        // if ($instance->customint5 && !isset($allcohorts[$instance->customint5])) {
+        //     // Somebody deleted a cohort, better keep the wrong value so that random ppl can not enrol.
+        //     $cohorts[$instance->customint5] = get_string('unknowncohort', 'cohort', $instance->customint5);
+        // }
+        // if (count($cohorts) > 1) {
+        //     $mform->addElement('select', 'customint5', get_string('cohortonly', 'enrol_spay'), $cohorts);
+        //     $mform->addHelpButton('customint5', 'cohortonly', 'enrol_spay');
+        // } else {
+        //     $mform->addElement('hidden', 'customint5');
+        //     $mform->setType('customint5', PARAM_INT);
+        //     $mform->setConstant('customint5', 0);
+        // }
 
         $mform->addElement(
             'select',
@@ -883,6 +897,7 @@ class enrol_spay_plugin extends enrol_plugin
             $warntext = get_string('instanceeditspaywarningtext', 'core_enrol');
             $mform->addElement('static', 'spaywarn', get_string('instanceeditspaywarning', 'core_enrol'), $warntext);
         }
+      
     }
 
     /**
@@ -910,36 +925,8 @@ class enrol_spay_plugin extends enrol_plugin
     {
         $errors = array();
 
-        // die(json_encode($data));
 
-        /* $checkpassword = false;
-
-        if ($instance->id) {
-            // Check the password if we are enabling the plugin again.
-            if (($instance->status == ENROL_INSTANCE_DISABLED) && ($data['status'] == ENROL_INSTANCE_ENABLED)) {
-                $checkpassword = true;
-            }
-
-            // Check the password if the instance is enabled and the password has changed.
-            if (($data['status'] == ENROL_INSTANCE_ENABLED) && ($instance->password !== $data['password'])) {
-                $checkpassword = true;
-            }
-        } else {
-            $checkpassword = true;
-        } */
-
-        /*  if ($checkpassword) {
-            $require = $this->get_config('requirepassword');
-            $policy  = $this->get_config('usepasswordpolicy');
-            if ($require and trim($data['password']) === '') {
-                $errors['password'] = get_string('required');
-            } else if (!empty($data['password']) && $policy) {
-                $errmsg = '';
-                if (!check_password_policy($data['password'], $errmsg)) {
-                    $errors['password'] = $errmsg;
-                }
-            }
-        } */
+      
 
         if ($data['status'] == ENROL_INSTANCE_ENABLED) {
             if (!empty($data['enrolenddate']) and $data['enrolenddate'] < $data['enrolstartdate']) {
@@ -951,10 +938,7 @@ class enrol_spay_plugin extends enrol_plugin
             $errors['expirythreshold'] = get_string('errorthresholdlow', 'core_enrol');
         } */
 
-        /* // Now these ones are checked by quickforms, but we may be called by the upload enrolments tool, or a webservive.
-        if (core_text::strlen($data['name']) > 255) {
-            $errors['name'] = get_string('err_maxlength', 'form', 255);
-        } */
+        
         $validstatus = array_keys($this->get_status_options());
         // $validnewenrols = array_keys($this->get_newenrols_options());
         // if (core_text::strlen($data['password']) > 50) {
@@ -966,23 +950,23 @@ class enrol_spay_plugin extends enrol_plugin
         // $validexpirynotify = array_keys($this->get_expirynotify_options());
         // $validlongtimenosee = array_keys($this->get_longtimenosee_options());
         $tovalidate = array(
-            'enrolstartdate' => PARAM_INT,
-            'enrolenddate' => PARAM_INT,
+            // 'enrolstartdate' => PARAM_INT,
+            // 'enrolenddate' => PARAM_INT,
             'name' => PARAM_TEXT,
             // 'customint1' => $validgroupkey,
             // 'customint2' => $validlongtimenosee,
-            'customint3' => PARAM_INT,
-            'customint4' => PARAM_INT,
-            'customint5' => PARAM_INT,
+            // 'customint3' => PARAM_INT,
+            // 'customint4' => PARAM_INT,
+            // 'customint5' => PARAM_INT,
             // 'customint6' => $validnewenrols,
             'status' => $validstatus,
-            'enrolperiod' => PARAM_INT,
+            // 'enrolperiod' => PARAM_INT,
             // 'expirynotify' => $validexpirynotify,
             // 'roleid' => $validroles
         );
-        if ($data['expirynotify'] != 0) {
-            $tovalidate['expirythreshold'] = PARAM_INT;
-        }
+        // if ($data['expirynotify'] != 0) {
+        //     $tovalidate['expirythreshold'] = PARAM_INT;
+        // }
         $typeerrors = $this->validate_param_types($data, $tovalidate);
         $errors = array_merge($errors, $typeerrors);
 
@@ -1018,21 +1002,21 @@ class enrol_spay_plugin extends enrol_plugin
      */
     public function update_instance($instance, $data)
     {
-        // In the form we are representing 2 db columns with one field.
-        if ($data->expirynotify == 2) {
-            $data->expirynotify = 1;
-            $data->notifyall = 1;
-        } else {
-            $data->notifyall = 0;
-        }
-        // Keep previous/default value of disabled expirythreshold option.
-        if (!$data->expirynotify) {
-            $data->expirythreshold = $instance->expirythreshold;
-        }
-        // Add previous value of newenrols if disabled.
-        if (!isset($data->customint6)) {
-            $data->customint6 = $instance->customint6;
-        }
+        // // In the form we are representing 2 db columns with one field.
+        // if ($data->expirynotify == 2) {
+        //     $data->expirynotify = 1;
+        //     $data->notifyall = 1;
+        // } else {
+        //     $data->notifyall = 0;
+        // }
+        // // Keep previous/default value of disabled expirythreshold option.
+        // if (!$data->expirynotify) {
+        //     $data->expirythreshold = $instance->expirythreshold;
+        // }
+        // // Add previous value of newenrols if disabled.
+        // if (!isset($data->customint6)) {
+        //     $data->customint6 = $instance->customint6;
+        // }
 
         return parent::update_instance($instance, $data);
     }
@@ -1106,249 +1090,3 @@ class enrol_spay_plugin extends enrol_plugin
     }
 }
 
-
-
-
-class Spay
-{
-    protected  $URL = "";
-    protected  $PROVIDERKEY = "";
-    protected  $SPAY_USERNAME = "";
-    protected  $SPAY_PASSWORD = "";
-
-    function __construct($url, $providerkey, $username, $passwd)
-    {
-        $this->URL = $url;
-        $this->PROVIDERKEY = $providerkey;
-        $this->SPAY_USERNAME = $username;
-        $this->SPAY_PASSWORD = $passwd;
-    }
-
-    /** 
-     * Get the public key form spay api
-     */
-    function enrol_spay_get_public_key()
-    {
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->URL . "GetPublicKey/",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => json_encode([
-                'providerKey' => $this->PROVIDERKEY
-            ]),
-            CURLOPT_HTTPHEADER => array(
-                "Content-Type: application/json",
-                "cache-control: no-cache"
-            ),
-        ));
-
-        $response = curl_exec($curl);
-        $err = curl_error($curl);
-
-        curl_close($curl);
-
-        if ($err) {
-            return null;
-        } else {
-            return json_decode($response);
-        }
-    }
-
-    /* 
-    * Login the d2el user in the spay api
-    */
-    public function enrol_spay_login_service()
-    {
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->URL . "Login/",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => json_encode([
-                'login' => $this->SPAY_USERNAME,
-                'password' => $this->enrol_spay_encrypt_password()
-            ]),
-            CURLOPT_HTTPHEADER => array(
-                "Content-Type: application/json",
-                "cache-control: no-cache"
-            ),
-        ));
-
-        $response = curl_exec($curl);
-        $err = curl_error($curl);
-
-        curl_close($curl);
-
-        if ($err) {
-            return null;
-        } else {
-            return json_decode($response);
-        }
-    }
-
-    public function enrol_spay_init_pay($msisdn, $servicecode)
-    {
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->URL . "InitPay/",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => json_encode([
-                'msisdn' => $msisdn,
-                'serviceCode' => $servicecode
-            ]),
-            CURLOPT_HTTPHEADER => array(
-                "token: " . $this->enrol_spay_login_service()->token,
-                "Content-Type: application/json",
-                "cache-control: no-cache"
-            ),
-        ));
-
-        $response = curl_exec($curl);
-        $err = curl_error($curl);
-
-        curl_close($curl);
-
-        if ($err) {
-            return false;
-        } else {
-            return json_decode($response);
-        }
-    }
-
-    public function enrol_spay_encrypt_password()
-    {
-        die(json_encode($this->enrol_spay_get_public_key()));
-        $public_key = "-----BEGIN PUBLIC KEY-----\n" . chunk_split($this->enrol_spay_get_public_key()->publicKey, 64, "\n") . "-----END PUBLIC KEY-----";
-        if (openssl_public_encrypt($this->SPAY_PASSWORD, $crypted, $public_key)) {
-            return base64_encode($crypted);
-        } else {
-            return '';
-        }
-    }
-
-    public function enrol_spay_check_subscription($mobile_number)
-    {
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->URL . "CheckSubscription/",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS =>  json_encode([
-                'serviceCode' => $this->SERVICECODE,
-                'msisdn' => $mobile_number
-            ]),
-            CURLOPT_HTTPHEADER => array(
-                "token: " . $this->enrol_spay_login_service()->token,
-                "Content-Type: application/json",
-                "cache-control: no-cache"
-            ),
-        ));
-
-        $response = curl_exec($curl);
-        $err = curl_error($curl);
-
-        curl_close($curl);
-
-        if ($err) {
-            return null;
-        } else {
-            return json_decode($response);
-        }
-    }
-
-    public function enrol_spay_unsubscription($mobile_number)
-    {
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $this->URL . "UnSubscribe/",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS =>  json_encode([
-                'serviceCode' => $this->SERVICECODE,
-                'msisdn' => $mobile_number
-            ]),
-            CURLOPT_HTTPHEADER => array(
-                "token: " . $this->enrol_spay_login_service()->token,
-                "Content-Type: application/json",
-                "cache-control: no-cache"
-            ),
-        ));
-
-        $response = curl_exec($curl);
-        $err = curl_error($curl);
-
-        curl_close($curl);
-
-        if ($err) {
-            return null;
-        } else {
-            return json_decode($response);
-        }
-    }
-
-    /** 
-     * sudain spay payment
-     */
-    public function enrol_spay_pay($pin)
-    {
-
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL =>  $this->URL . "Payment/",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => json_encode([
-                'pin' => $pin,
-                'requestId' => '' //requestId per operation i have to bind it ro the specific requester
-            ]),
-            CURLOPT_HTTPHEADER => array(
-                "token: " . $this->enrol_spay_login_service()->token,
-                "Content-Type: application/json",
-                "cache-control: no-cache"
-            ),
-        ));
-
-        $response = curl_exec($curl);
-        $err = curl_error($curl);
-
-        curl_close($curl);
-
-        if ($err) {
-            echo "cURL Error #:" . $err;
-        } else {
-            echo $response;
-        }
-    }
-}
