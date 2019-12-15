@@ -140,12 +140,20 @@ class enrol_spay_plugin extends enrol_plugin
     public function enrol_spay(stdClass $instance, $data = null)
     {
         global $DB, $USER, $CFG;
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 9b19520677b7515acef0b0a5abc540e713bf6cda
+>>>>>>> d8668c00992f3283667ddcdaf0998e32deb4dbb2
         require_once('Spay/lib/Spay.php');
         
         Spay::$url = $this->get_config('url');
         Spay::$providerkey = $this->get_config('providerkey');
         Spay::$username = $this->get_config('username');
         Spay::$password = $this->get_config('passwd');
+<<<<<<< HEAD
 
         $record = $DB->get_record('enrol_spay', array('instanceid' => $instance->id),'*', IGNORE_MISSING);
       
@@ -153,10 +161,38 @@ class enrol_spay_plugin extends enrol_plugin
              $result = Spay::enrol_spay_pay($data->pin, $record->requestid);
             if($result->status){
             
+=======
+<<<<<<< HEAD
+=======
+=======
+        // require_once('./Spay/lib/Spay.php');
+
+        $spay = new Spay(
+            $this->get_config('url'),
+            $this->get_config('providerkey'),
+            $this->get_config('username'),
+            $this->get_config('passwd')
+        );
+
+>>>>>>> 28fe3a301719f03891d6628fa35f6f85fdab6979
+>>>>>>> 9b19520677b7515acef0b0a5abc540e713bf6cda
+
+        $record = $DB->get_record('enrol_spay', array('userid' => $USER->id, 'courseid' =>  $instance->courseid, 'instanceid' => $instance->id), IGNORE_MISSING);
+      
+        if ($record) {
+<<<<<<< HEAD
+             $result = Spay::enrol_spay_pay($data->pin, $record->requestid);
+            if($result->responseCode == 105){
+                $errors['pin'] = $result->responseMessage;
+                return;
+                
+            }
+>>>>>>> d8668c00992f3283667ddcdaf0998e32deb4dbb2
             $new = new stdClass();
             $new->id = $record->id;
             $new->pin = $data->pin;
             $new->subscriptiondate = time();
+<<<<<<< HEAD
             $DB->update_record('enrol_spay', $new, false);
             
             $timestart = time();
@@ -169,6 +205,26 @@ class enrol_spay_plugin extends enrol_plugin
                 return;
             }
          
+=======
+            $DB->insrt_record('enrol_spay', $new);
+            $timestart = time();
+            if ($instance->enrolperiod) {
+            $timeend = $timestart + $instance->enrolperiod;
+            } else {
+                $timeend = 0;
+            }
+            $this->enrol_user($instance, $USER->id, $instance->roleid, $timestart, $timeend);
+            if ($instance->customint4 != ENROL_DO_NOT_SEND_EMAIL) {
+                $this->email_welcome_message($instance, $USER);
+            }
+=======
+            
+            
+            
+            $timestart = time();
+            // $timeend = $timestart + ;
+>>>>>>> 9b19520677b7515acef0b0a5abc540e713bf6cda
+>>>>>>> d8668c00992f3283667ddcdaf0998e32deb4dbb2
         } else {
             $enrol = Spay::enrol_spay_init_pay($data->msisdn, $data->servicecode);
             $new = new stdClass();
@@ -928,11 +984,11 @@ class enrol_spay_plugin extends enrol_plugin
 
       
 
-        if ($data['status'] == ENROL_INSTANCE_ENABLED) {
-            if (!empty($data['enrolenddate']) and $data['enrolenddate'] < $data['enrolstartdate']) {
-                $errors['enrolenddate'] = get_string('enrolenddaterror', 'enrol_spay');
-            }
-        }
+        // if ($data['status'] == ENROL_INSTANCE_ENABLED) {
+        //     if (!empty($data['enrolenddate']) and $data['enrolenddate'] < $data['enrolstartdate']) {
+        //         $errors['enrolenddate'] = get_string('enrolenddaterror', 'enrol_spay');
+        //     }
+        // }
 
         /* if ($data['expirynotify'] > 0 and $data['expirythreshold'] < 86400) {
             $errors['expirythreshold'] = get_string('errorthresholdlow', 'core_enrol');

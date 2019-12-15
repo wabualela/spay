@@ -205,7 +205,11 @@ class Spay
      */
     public static function enrol_spay_pay($pin, $requestid)
     {
+<<<<<<< HEAD
         $token = Spay::enrol_spay_login_service() ? Spay::enrol_spay_login_service()->token : null;
+=======
+
+>>>>>>> d8668c00992f3283667ddcdaf0998e32deb4dbb2
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
@@ -221,18 +225,34 @@ class Spay
                 'requestId' => $requestid //requestId per operation i have to bind it ro the specific requester
             ]),
             CURLOPT_HTTPHEADER => array(
+<<<<<<< HEAD
                 "token: " . $token ,
+=======
+                "token: " . Spay::enrol_spay_login_service()->token,
+>>>>>>> d8668c00992f3283667ddcdaf0998e32deb4dbb2
                 "Content-Type: application/json",
                 "cache-control: no-cache"
             ),
         ));
 
         $response = curl_exec($curl);
+<<<<<<< HEAD
         
         $error = curl_error($curl); 
         
         curl_close($curl);
         
         return ($error) ? null : json_decode($response);
+=======
+        $err = curl_error($curl);
+
+        curl_close($curl);
+
+        if ($err) {
+            echo "cURL Error #:" . $err;
+        } else {
+            echo json_decode($response);
+        }
+>>>>>>> d8668c00992f3283667ddcdaf0998e32deb4dbb2
     }
 }

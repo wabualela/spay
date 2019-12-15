@@ -78,26 +78,50 @@ class enrol_spay_enrol_form extends moodleform
         $this->instance = $instance;
         $plugin = enrol_get_plugin('spay');
         
+<<<<<<< HEAD
         $record = $DB->get_record('enrol_spay', array('instanceid' => $instance->id, 'userid' => $USER->id, 'courseid' => $instance->courseid),'*', IGNORE_MISSING);
         $services = array();
             foreach (explode("\n", $plugin->get_config('servicecodes')) as $service) {
                 $tmp = explode("|", $service);
                 $services[$tmp[0]]['code'] =  $tmp[1];
                 $services[$tmp[0]]['cost'] =  intval($tmp[2]);
+=======
+        $record = $DB->get_record('enrol_spay', array('userid' => $USER->id, 'courseid' =>  $instance->courseid, 'instanceid' => $instance->id), IGNORE_MISSING);
+        $services = array();
+            $servicenames = array();
+            foreach (explode("\n", $plugin->get_config('servicecodes')) as $service) {
+
+                $tmp = explode("|", $service);
+                $services[$tmp[0]]['code'] =  $tmp[1];
+                $services[$tmp[0]]['cost'] =  intval($tmp[2]);
+                $servicenames["{$tmp[0]}"] = $tmp[0];
+>>>>>>> d8668c00992f3283667ddcdaf0998e32deb4dbb2
             }
             
         $heading = $plugin->get_instance_name($instance);
         $mform->addElement('header', 'spayheader', $heading);
 
         if ($record) {
+<<<<<<< HEAD
+=======
+            // $mform->addElement('text', 'msisdn', get_string('msisdn', 'enrol_spay'));
+            // $mform->setType('msisdn', PARAM_TEXT);
+            // $mform->addHelpButton('msisdn', 'msisdn', 'enrol_spay');
+            // $mform->setDefault('msisdn', $record->msisdn);
+>>>>>>> d8668c00992f3283667ddcdaf0998e32deb4dbb2
             
             $mform->addElement('text', 'pin', get_string('pin', 'enrol_spay'));
             $mform->setType('pin', PARAM_INT);
             $mform->addHelpButton('pin', 'pin', 'enrol_spay');
 
+<<<<<<< HEAD
             $mform->addElement('static', '', get_string('subscriptioncost', 'enrol_spay'), $services[$heading]['cost'] . ' ' . get_string('subscriptionamount', 'enrol_spay'));
             
             $this->add_action_buttons(false, get_string('enrolmenow', 'enrol_spay'));
+=======
+            $mform->addElement('static', '', get_string('subscriptioncost', 'enrol_spay'), $services[$heading]['cost'] . get_string('subscriptionamount', 'enrol_spay'));
+
+>>>>>>> d8668c00992f3283667ddcdaf0998e32deb4dbb2
         } else {
 
             $mform->addElement('text', 'msisdn', get_string('msisdn', 'enrol_spay'));
@@ -142,6 +166,10 @@ class enrol_spay_enrol_form extends moodleform
             return $errors;
         }
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> d8668c00992f3283667ddcdaf0998e32deb4dbb2
        if(array_key_exists('msisdn', $data) && $data['msisdn'] === ''){
             $errors['msisdn'] = get_string('msisdnempty', 'enrol_spay');
         }
@@ -155,6 +183,16 @@ class enrol_spay_enrol_form extends moodleform
         }
 
         if(array_key_exists('pin', $data) && $data['pin'] === ''){
+<<<<<<< HEAD
+=======
+=======
+        if ($data['msisdn'] && !empty($data['msisdn'])) {
+            $errors['msisdn'] = get_string('msisdnempty', 'enrol_spay');
+        }
+        
+         if ($data['pin'] && !empty($data['pin'])) {
+>>>>>>> 9b19520677b7515acef0b0a5abc540e713bf6cda
+>>>>>>> d8668c00992f3283667ddcdaf0998e32deb4dbb2
             $errors['pin'] = get_string('pinempty', 'enrol_spay');
         }
 
